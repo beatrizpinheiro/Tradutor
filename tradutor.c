@@ -40,6 +40,26 @@ void variaveis(char variavel, int numero_variavel) {
 
 }
 
+void arrays(char variavel, int numero_variavel, int index) {
+	
+	if(variavel == 'p') {
+		//Array parâmetro
+		printf("movabs $%d, %%rcx \n",index);	
+		printf("imulq $4, %%rcx\n");
+		if (numero_variavel == 1) {
+			printf("addq %%rdi, %%rcx\n");
+		}
+		if (numero_variavel == 2) {
+			printf("addq %%rsi, %%rcx\n");
+		}
+		if (numero_variavel == 3) {
+			printf("addq %%rdx, %%rcx\n");
+		}
+		
+	}
+
+}
+
 int main()
 {
 	char v1;
@@ -207,12 +227,20 @@ int main()
 		//set with
 		r = sscanf(line, "set %ca%d index ci%d with %ci%d", &a0, &i1, &i2, &a1, &i3);
 		if (r == 5) {
-			printf("set %ca%d index ci%d with %ci%d", a0, i1, i2, a1, i3);
+			//va2[5] = 2
+			arrays(a0,i1,i2);
+			printf("movl ");
+			variaveis(a1,i3);
+			printf(", (%%rcx)");
 		}
 		//get to
 		r = sscanf(line, "get %ca%d index ci%d to %ci%d", &a0, &i1, &i2, &a1, &i3);
 		if (r == 5) {
-			printf("get %ca%d index ci%d to %ci%d", a0, i1, i2, a1, i3);
+			//vi1 = va2[8]
+			arrays(a0,i1,i2);
+			printf("movl (%%rcx), ");
+			variaveis(a1,i3);
+			
 		}
 
 	}
