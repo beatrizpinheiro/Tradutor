@@ -1,2 +1,2 @@
 # Tradutor
-Traduz código BPL para Assembly
+Traduz um código BPL para Assembly
