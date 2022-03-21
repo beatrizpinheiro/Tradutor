@@ -5,7 +5,17 @@
 #define LINESZ 256 
 #define TAM_MAX 99999
 
-int pos_pilha = 0;
+int indice = 0;
+int indice2 = 0;
+
+struct Pilha{
+	char nome[4];
+	int tamanho;
+	int posicao;
+};
+
+void cria_pilha(struct Pilha *pi, int x, int n, int ci);
+void exibe_pilha(struct Pilha *pi, int x, int n, int ci);
 
 // Remove o '\n' do fim da linha
 void remove_newline(char* ptr)
@@ -60,8 +70,8 @@ void arrays(char variavel, int numero_variavel, int index) {
 
 }
 
-int main()
-{
+int main() {
+	struct Pilha pi[TAM_MAX];
 	char v1;
 	int r, i1, i2, i4, i3, i5;
 	int inicio, fim, passo;
@@ -70,7 +80,9 @@ int main()
 	int f, var, vet, ci, val, ind;
 	char a0, a1, a2, a3, a4, a5, a6;
 	int contador_if = 0;
-
+	
+	
+	
 	// Lê uma linha por vez
 	while (fgets(line, LINESZ, stdin) != NULL) {
 		count++;
@@ -96,6 +108,8 @@ int main()
 
 		// Verifica se line começa com 'end' (3 letras)
 		if (strncmp(line, "end", 3) == 0) {
+			indice = 0;
+			indice2 = 0;
 			printf("leave\nret\n");
 			continue;
 		}
@@ -151,16 +165,21 @@ int main()
 		// Verifica se a linha esta inicializando uma variável ou um vetor  
 		r = sscanf(line, "var vi%d", &var);
 		if (r == 1) {
-			//printf("var %d", var);
+			//printf("var vi%d\n", var);
+			//(struct Pilha *pi, int x, int n, int ci) 
+			cria_pilha(pi, 0, var, 0);
+			exibe_pilha(pi, 0, var, 0);
 		}
 		r = sscanf(line, "vet va%d size ci%d", &vet, &ci);
 		if (r == 2) {
-			//printf("vet");
+			//printf("vet va%d ci%d\n", vet, ci);
+			cria_pilha(pi, 1, vet, ci);
+			exibe_pilha(pi, 0, var, 0);
 		}
 		// Verifica o que está retornando
 		r = sscanf(line, "return ci%d", &vet);
 		if (r == 1) {
-			printf("movl  %%eax,  ");
+			printf("movl  %%eax,  \n");
 		}
 
 		r = sscanf(line, "return vi%d", &var);
@@ -244,7 +263,42 @@ int main()
 		}
 
 	}
-
+	
 	return 0;
+}
+
+void cria_pilha(struct Pilha *pi, int x, int n, int ci) {
+	/*
+		x = identificador (se é vi=0 ou va=1)
+		n = número da var/vet 
+		ci = indice do vetor (se for var ci = 0)
+		indice = posicao atual da pilha
+	*/
+	
+	if(x == 0){
+		sprintf(pi[indice].nome, "vi%d", n);
+		pi[indice].tamanho = 4;
+		if(indice == 0) {
+			pi[indice].posicao = pi[indice].tamanho;
+		}else{
+			pi[indice].posicao = pi[indice-1].posicao + pi[indice].tamanho;
+		}
+		indice++;
+	}
+	else if(x == 1){
+		sprintf(pi[indice].nome, "va%d", n);
+		pi[indice].tamanho = (4 * ci);
+		if(indice == 0) {
+			pi[indice].posicao = pi[indice].tamanho;
+		}else{
+			pi[indice].posicao = pi[indice-1].posicao + pi[indice].tamanho;
+		}
+		indice++;
+	}
+}
+
+void exibe_pilha(struct Pilha *pi, int x, int n, int ci) {
+	printf("-%d(%%rbp) -> %s\n", pi[indice2].posicao, pi[indice2].nome);
+	indice2++;
 }
 
