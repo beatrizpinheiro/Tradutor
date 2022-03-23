@@ -81,8 +81,9 @@ int main() {
 	char a0, a1, a2, a3, a4, a5, a6;
 	int contador_if = 0;
 	
-	
-	
+	printf(".data\n");
+	printf(".text\n");
+
 	// Lê uma linha por vez
 	while (fgets(line, LINESZ, stdin) != NULL) {
 		count++;
