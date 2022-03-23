@@ -1,12 +1,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #define LINESZ 256 
 #define TAM_MAX 99999
 
 int indice = 0;
 int indice2 = 0;
+int tamanho_pilha=0;
 
 struct Pilha{
 	char nome[4];
@@ -16,6 +18,8 @@ struct Pilha{
 
 void cria_pilha(struct Pilha *pi, int x, int n, int ci);
 void exibe_pilha(struct Pilha *pi, int x, int n, int ci);
+void adiciona_parametro(struct Pilha *pi, char x, int n);
+int pega_posicao(struct Pilha *pi, char nome1, char nome2, int nome3);
 
 // Remove o '\n' do fim da linha
 void remove_newline(char* ptr)
@@ -80,6 +84,8 @@ int main() {
 	int f, var, vet, ci, val, ind;
 	char a0, a1, a2, a3, a4, a5, a6;
 	int contador_if = 0;
+	int quantidade_parametros = 0;
+	char parametro[3];
 	
 	printf(".data\n");
 	printf(".text\n");
@@ -103,7 +109,12 @@ int main() {
 
 		//Verifica enddef
 		if (strncmp(line, "enddef", 6) == 0) {
+			//char x, int n
+			if( quantidade_parametros > 0) adiciona_parametro(pi,parametro[0],1);
+			if( quantidade_parametros > 1) adiciona_parametro(pi,parametro[1],2);
+			if( quantidade_parametros > 2) adiciona_parametro(pi,parametro[2],3);
 			
+			printf("subq $%d, %%rsp\n", tamanho_pilha);
 			continue;
 		}
 
@@ -149,25 +160,17 @@ int main() {
 
 
 		// Verifica se é uma função e quantos parâmetros
-		r = sscanf(line, "function f%d p%c1 p%c2 p%c3", &f, &a1, &a2, &a3);
+		r = sscanf(line, "function f%d p%c1 p%c2 p%c3", &f, &parametro[0], &parametro[1], &parametro[2]);
 		if (r > 0 && r < 5) {
 			printf(".globl f%d\nf%d:\n", f, f);
+			quantidade_parametros = r-1;
 		}
-		/*if(r == 3){
-		  printf("funcao com 3 elementos\n");
-		}
-		if(r == 2){
-		  printf("funcao com 2 elementos\n");
-		}
-		if(r == 1){
-		  printf("funcao com 1 elementos\n");
-		}*/
 
 		// Verifica se a linha esta inicializando uma variável ou um vetor  
 		r = sscanf(line, "var vi%d", &var);
 		if (r == 1) {
 			//printf("var vi%d\n", var);
-			//(struct Pilha *pi, int x, int n, int ci) 
+			//(struct Pilha *pi, int x, bool local, int n, int ci) 
 			cria_pilha(pi, 0, var, 0);
 			exibe_pilha(pi, 0, var, 0);
 		}
@@ -194,14 +197,16 @@ int main() {
 		// vi1 = ci1 
 		if (r == 4) {
 			printf("movl ");
-			variaveis(a1, i1);
+			if (a1 == 'c') printf("$%d ",i1);
+			else printf("-%d(%%rbp)" ,pega_posicao(pi,a1,'i',i1) );	
 			printf(", ");
-			variaveis(a0, val);
+			printf("-%d(%%rbp)" ,pega_posicao(pi,a0,'i',val) );
 			printf("\n");
 
 		}
 		// vi1 = pi1 + vi2, vi2 = vi1 * ci-5, etc   pi1 = pi2 + ci2
 		if (r == 7) {
+			//DIVISÃO
 			if (a2 == '/') {
 				printf("movl %%edx, %%ebx\n");
 				printf("movl ");
@@ -214,17 +219,20 @@ int main() {
 				printf("\nmovl %%ebx, %%edx\n");
 
 			}
+			// OUTRAS OPERAÇÕES
 			else {
 				printf("movl ");
-				variaveis(a1, i1);
+				if (a1 == 'c') printf("$%d ",i1);
+				else printf("-%d(%%rbp)" ,pega_posicao(pi,a1,'i',i1) );	
 				printf(", ");
-				variaveis(a0, val);
+				printf("-%d(%%rbp)" ,pega_posicao(pi,a0,'i',val) );
 				if (a2 == '+') printf("\naddl ");
 				if (a2 == '-') printf("\nsubl ");
 				if (a2 == '*') printf("\nimull ");
-				variaveis(a3, i2);
+				if (a3 == 'c') printf("$%d ",i2);
+				else printf("-%d(%%rbp)" ,pega_posicao(pi,a3,'i',i2) );
 				printf(", ");
-				variaveis(a0, val);
+				printf("-%d(%%rbp)" ,pega_posicao(pi,a0,'i',val) );
 				printf("\n");
 			}
 		}
@@ -271,6 +279,7 @@ int main() {
 void cria_pilha(struct Pilha *pi, int x, int n, int ci) {
 	/*
 		x = identificador (se é vi=0 ou va=1)
+		local = boolean. Se for true, é variavel local. False, é parametro 
 		n = número da var/vet 
 		ci = indice do vetor (se for var ci = 0)
 		indice = posicao atual da pilha
@@ -298,8 +307,46 @@ void cria_pilha(struct Pilha *pi, int x, int n, int ci) {
 	}
 }
 
+void adiciona_parametro(struct Pilha *pi, char x, int n){
+	//x = identificador (se é pi ou pa)
+	//n = numero do parametro
+
+	if (x == 'i'){
+		sprintf(pi[indice].nome, "pi%d", n);
+		pi[indice].tamanho = 4;
+		if(indice == 0) {
+			pi[indice].posicao = pi[indice].tamanho;
+		}else{
+			pi[indice].posicao = pi[indice-1].posicao + pi[indice].tamanho;
+		}
+		if(n == 1) printf("movq %%rdi, -%d(%%rbp)\n" ,pi[indice].posicao);
+		if(n == 2) printf("movq %%rsi, -%d(%%rbp)\n" ,pi[indice].posicao);
+		if(n == 3) printf("movq %%rdx, -%d(%%rbp)\n" ,pi[indice].posicao);
+		indice++;
+		tamanho_pilha+=4;
+	}
+
+	
+
+}
+
 void exibe_pilha(struct Pilha *pi, int x, int n, int ci) {
-	printf("-%d(%%rbp) -> %s\n", pi[indice2].posicao, pi[indice2].nome);
+	printf("#-%d(%%rbp) -> %s\n", pi[indice2].posicao, pi[indice2].nome);
+	tamanho_pilha = pi[indice2].posicao;
 	indice2++;
 }
+
+int pega_posicao(struct Pilha *pi,char nome1, char nome2, int nome3){
+	
+	int i;
+	char nome[4];
+	sprintf(nome, "%c%c%d", nome1,nome2,nome3);
+
+	for(i=0;i<=indice;i++){
+		if (strcmp(nome, pi[i].nome) == 0) return pi[i].posicao;
+	}
+	return 0;
+}
+
+
 
