@@ -20,16 +20,18 @@ struct Pilha{
 
 void remove_newline(char* ptr);
 void cria_pilha(struct Pilha *pi, int x, int n, int ci);
-void par_pilha(struct Pilha *pi, int n[3]);
+int par_pilha(struct Pilha *pi, int n[3]);
 void exibe_pilha(struct Pilha *pi, int n);
 void adiciona_parametro(struct Pilha *pi, char x, int n);
 int pega_posicao(struct Pilha *pi, char *variavel);
 void chama_funcao(int pos0,int pos1,int pos2,int pos3,int nome_funcao);
+void inicia_traducao(int x, int f);
+void inicia_salvamento(struct Pilha *pi);
 
 
 int main() {
 	struct Pilha pi[TAM_MAX];
-	int r, r1=0, i1, i2, i4, i3, i5, i;
+	int r, i1, i2, i4, i3, i5, i, x=0, qtd;
 	int inicio, fim, passo;
 	char line[LINESZ];
 	int count = 0;
@@ -43,46 +45,45 @@ int main() {
 	int num[3]; 	
 	char par1, par2, par3;
 	
-	printf(".data\n");
-	printf(".text\n");
+	
 
 	// Lê uma linha por vez
 	while (fgets(line, LINESZ, stdin) != NULL) {
 		count++;
 		remove_newline(line);
-
+	
+		// Verifica se é uma função e quantos parâmetros
+		r = sscanf(line, "function f%d p%c%d p%c%d p%c%d", 
+				&f, &par1, &num[0], &par2, &num[1], &par3, &num[2]);
+		if ((r-1) / 2 == 1) { // 1 parametro
+			qtd = par_pilha(pi, num);
+			indice = 1;
+			exibe_pilha(pi, 1);
+		}
+		else if ((r-1) / 2 == 2) { // 2 parametros
+			qtd = par_pilha(pi, num);
+			exibe_pilha(pi, 2);
+			indice = 2;
+		}
+		else if ((r-1) / 2 == 3) { // 3 parametros
+			qtd = par_pilha(pi, num);
+			exibe_pilha(pi, 3);
+			indice = 3;
+		}
+			
 		//Verifica endif
 		if (strncmp(line, "endif", 5) == 0) {
 			printf("end_if%d:\n", contador_if);
 			continue;
 		}
-		//Verifica def
-		if (strncmp(line, "def", 3) == 0) {
-			printf("pushq %%rbp\n");
-			printf("movq  %%rsp, %%rbp\n");
-			continue;
-		}
-
+		
 		//Verifica enddef
 		if (strncmp(line, "enddef", 6) == 0) {
-			//char x, int n
-			/*if( quantidade_parametros > 0) adiciona_parametro(pi,parametro[0],1);
-			if( quantidade_parametros > 1) adiciona_parametro(pi,parametro[1],2);
-			if( quantidade_parametros > 2) adiciona_parametro(pi,parametro[2],3);*/
-			if(tamanho_pilha > 0) {
-				tamanho_pilha += 16 - tamanho_pilha % 16;
-				printf("subq $%d, %%rsp\n", tamanho_pilha);
-				continue;
-			}
+			inicia_traducao(x, f);
+			inicia_salvamento(pi);
+			x++;
 		}
-
-		// Verifica se line começa com 'end' (3 letras)
-		if (strncmp(line, "end", 3) == 0) {
-			indice = 0;
-			indice2 = 0;
-			printf("leave\nret\n");
-			continue;
-		}
+		
 
 		// Verifica se é um 'if'
 		//a3 para o caso de a2 ser um sinal negativo
@@ -108,31 +109,7 @@ int main() {
 		if(r == 4){
 			// ??
 		}
-		// Verifica se é uma função e quantos parâmetros
-		r1 = sscanf(line, "function f%d p%c%d p%c%d p%c%d", 
-					&f, &par1, &num[0], &par2, &num[1], &par3, &num[2]);
-		if (r1> 0 && r1<7) printf(".globl f%d\nf%d:\n", f, f);
-			//quantidade_parametros = r-1;
-			if ((r1-1) / 2 == 1) { // 1 parametro
-				//printf("a funcao tem 1 parametro\n");
-				par_pilha(pi, num);
-				exibe_pilha(pi, 1);
-				indice = 1;
-			}
-			else if ((r1-1) / 2 == 2) { // 2 parametros
-				//printf("a funcao tem 2 parametros\n");
-				par_pilha(pi, num);
-				exibe_pilha(pi, 2);
-				indice = 2;
-			}
-			else if ((r1-1) / 2 == 3) { // 3 parametros
-				//printf("a funcao tem 3 parametros\n");
-				par_pilha(pi, num);
-				exibe_pilha(pi, 3);
-				indice = 3;
-			}
-		
-
+	
 		// Verifica se a linha esta inicializando uma variável ou um vetor  
 		r = sscanf(line, "var vi%d", &var);
 		if (r == 1) {
@@ -236,8 +213,13 @@ int main() {
 			//vi1 = va2[8]
 			
 		}
+		if (strncmp(line, "end", 4) == 0) {
+			indice = 0;
+			indice2 = 0;
+			x=0;
+			printf("leave\nret\n\n");
+		}
 	}
-	
 	return 0;
 }
 
@@ -284,8 +266,11 @@ void cria_pilha(struct Pilha *pi, int x, int n, int ci) {
 	}
 }
 
-void par_pilha(struct Pilha *pi, int n[3]) {
-	int i;
+int par_pilha(struct Pilha *pi, int n[3]) {
+	int i, c;
+	char str[4] = {'d', 's', 'd', 'c'};
+	char str2[4] = {'i', 'i', 'x', 'x'};
+	
 	i = indice;
 	if(n[1] == 0 && n[2] == 0) { // 1 par
 		sprintf(pi[i].nome, "px%d", n[i]);
@@ -295,9 +280,10 @@ void par_pilha(struct Pilha *pi, int n[3]) {
 		}else{
 			pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 		}
-		
+		//printf("movq %%rdi, -%d(rbp)\n", pi[i].posicao);
 	}
 	else if(n[2] == 0) { // 2 par
+		c=0;
 		for(i = indice; i < indice+2; i++) {
 			sprintf(pi[i].nome, "px%d", n[i]);
 			pi[i].tamanho = 8;
@@ -306,6 +292,8 @@ void par_pilha(struct Pilha *pi, int n[3]) {
 			}else{
 				pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 			}
+			//printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
+			c++;
 		}
 	}
 	else if(n[2] != 0 ) { // 3 par
@@ -317,6 +305,8 @@ void par_pilha(struct Pilha *pi, int n[3]) {
 			}else{
 				pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 			}
+			//printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
+			c++;
 		}
 	}
 }
@@ -355,6 +345,39 @@ void chama_funcao(int pos0,int pos1,int pos2,int pos3,int nome_funcao){
 
 }
 
+void inicia_traducao(int x, int f) {
+	while (x == 0) {
+		printf(".data\n");
+		printf(".text\n");
+		x++;
+	}
+	printf(".globl f%d\nf%d:\n", f, f);
+	printf("pushq %%rbp\n");
+	printf("movq  %%rsp, %%rbp\n");
+	if(tamanho_pilha > 0) {
+		if(tamanho_pilha % 16 == 0) {
+			printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+		}else {
+			tamanho_pilha += 16 - tamanho_pilha % 16;
+			printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+		}
+	}
+}
+
+void inicia_salvamento(struct Pilha *pi) {
+	int i, c=0;
+	char str[4] = {'d', 's', 'd', 'c'};
+	char str2[4] = {'i', 'i', 'x', 'x'};
+	
+	printf("#Salvando os parametros\n");
+	for(i=0; i<indice; i++) {
+		if(pi[i].nome[0] == 'p') {
+			printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
+			c++;
+		}
+	}
+	printf("\n");
+}
 
 
 
