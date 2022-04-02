@@ -10,6 +10,7 @@
 
 int indice = 0;
 int indice2 = 0;
+int indice3 = 0;
 int tamanho_pilha=0;
 
 struct Pilha{
@@ -27,6 +28,7 @@ int pega_posicao(struct Pilha *pi, char *variavel);
 void chama_funcao(int pos0,int pos1,int pos2,int pos3,int nome_funcao);
 void inicia_traducao(int x, int f);
 void inicia_salvamento(struct Pilha *pi);
+int calcula_vetor(struct Pilha *pi, int index, int pos);
 
 
 int main() {
@@ -38,7 +40,7 @@ int main() {
 	int f, var, vet, ci, val, ind;
 	char a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11;
 	int contador_if = 0;
-	char variavel[4];
+	char variavel[4], variavel2[4];
 	int pos[10];
 	
 	//Parametros da funcao
@@ -76,12 +78,31 @@ int main() {
 			printf("end_if%d:\n", contador_if);
 			continue;
 		}
+		//Verifica def
+		if (strncmp(line, "def", 3) == 0) {
+			inicia_traducao(x, f);
+		if(tamanho_pilha > 0) {
+			if(tamanho_pilha % 16 == 0) {
+				printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+			}else {
+			tamanho_pilha += 16 - tamanho_pilha % 16;
+				printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+			}
+		}
+			x++;
+		}
 		
 		//Verifica enddef
 		if (strncmp(line, "enddef", 6) == 0) {
-			inicia_traducao(x, f);
+			if(tamanho_pilha > 0) {
+			if(tamanho_pilha % 16 == 0) {
+				printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+			}else {
+			tamanho_pilha += 16 - tamanho_pilha % 16;
+				printf("subq $%d, %%rsp\n\n", tamanho_pilha);
+			}
+		}
 			inicia_salvamento(pi);
-			x++;
 		}
 		
 
@@ -171,12 +192,14 @@ int main() {
 		//Pega a posição de todos
 		//Primeira variavel, que recebe a atribuição (VI1 = call f1 por exemplo)
 		if(r>3){
+			sprintf(variavel, "%c%c%c", a9,a10,a11);
 			variavel[0] = a9;
 			variavel[1] = a10;		 
 			variavel[2] = a11;	
 			pos[0] = pega_posicao(pi, variavel);
 			//Primeiro Parametro da função, se tiver
 			if(r >= 7){
+				//sprintf(variavel, "%c%c%c", a0,a1,a2);
 				variavel[0] = a0;
 				variavel[1] = a1;		 
 				variavel[2] = a2;	
@@ -184,6 +207,7 @@ int main() {
 			}
 			//Segundo Parametro da função, se tiver
 			if(r >= 10){
+				//sprintf(variavel, "%c%c%c", a3,a4,a5);
 				variavel[0] = a3;
 				variavel[1] = a4;		 
 				variavel[2] = a5;	
@@ -191,6 +215,7 @@ int main() {
 			}
 			if(r >=13){
 			//Terceiro Parametro da função, se tiver
+				//sprintf(variavel, "%c%c%c", a6,a7,a8);
 				variavel[0] = a6;
 				variavel[1] = a7;		 
 				variavel[2] = a8;	
@@ -201,18 +226,31 @@ int main() {
 			continue;
 		}
 
-		//Verifica acesso a Array
-		//set with
+		//===REALIZA AS OPERAÇÕES SET WITH===//
 		r = sscanf(line, "set %ca%d index ci%d with %ci%d", &a0, &i1, &i2, &a1, &i3);
 		if (r == 5) {
-			//va2[5] = 2
-		}
-		//get to
-		r = sscanf(line, "get %ca%d index ci%d to %ci%d", &a0, &i1, &i2, &a1, &i3);
-		if (r == 5) {
-			//vi1 = va2[8]
+			sprintf(variavel, "%ca%d", a0,i1);
+			sprintf(variavel2, "%ci%d", a1, i3);
+			pos[0] = pega_posicao(pi, variavel);
+			//int calcula_vetor(struct Pilha *pi, int index, int pos)
+			printf("%ca%d = -%d --> ci%d\n",a0,i1,calcula_vetor(pi, i2, pos[0]), i2);
 			
 		}
+		//===REALIZA AS OPERAÇÕES GET TO===//
+		r = sscanf(line, "get %ca%d index ci%d to %ci%d", &a0, &i1, &i2, &a1, &i3);
+		if (r == 5) {
+			sprintf(variavel, "%ca%d", a0,i1);
+			sprintf(variavel2, "%ci%d", a1, i3);
+			pos[0] = pega_posicao(pi, variavel);
+			//int calcula_vetor(struct Pilha *pi, int index, int pos)
+			printf("%ca%d = -%d --> ci%d\n",a0,i1,calcula_vetor(pi, i2, pos[0]), i2);
+			
+		}
+		
+		
+		
+		
+		//===FINALIZA O PROGRAMA===//
 		if (strncmp(line, "end", 4) == 0) {
 			indice = 0;
 			indice2 = 0;
@@ -325,6 +363,7 @@ int pega_posicao(struct Pilha *pi, char *variavel){
 	
 	for(i=0;i<indice;i++){
 		if(strcmp(pi[i].nome, variavel) == 0){
+			indice3 = i;
 			return pi[i].posicao;
 		}
 		
@@ -354,14 +393,6 @@ void inicia_traducao(int x, int f) {
 	printf(".globl f%d\nf%d:\n", f, f);
 	printf("pushq %%rbp\n");
 	printf("movq  %%rsp, %%rbp\n");
-	if(tamanho_pilha > 0) {
-		if(tamanho_pilha % 16 == 0) {
-			printf("subq $%d, %%rsp\n\n", tamanho_pilha);
-		}else {
-			tamanho_pilha += 16 - tamanho_pilha % 16;
-			printf("subq $%d, %%rsp\n\n", tamanho_pilha);
-		}
-	}
 }
 
 void inicia_salvamento(struct Pilha *pi) {
@@ -369,7 +400,7 @@ void inicia_salvamento(struct Pilha *pi) {
 	char str[4] = {'d', 's', 'd', 'c'};
 	char str2[4] = {'i', 'i', 'x', 'x'};
 	
-	printf("#Salvando os parametros\n");
+	printf("\n#Salvando os parametros\n");
 	for(i=0; i<indice; i++) {
 		if(pi[i].nome[0] == 'p') {
 			printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
@@ -377,6 +408,22 @@ void inicia_salvamento(struct Pilha *pi) {
 		}
 	}
 	printf("\n");
+}
+
+int calcula_vetor(struct Pilha *pi, int index, int pos) {
+	/*
+		Essa funcao calcula a posicao de um vetor com base no indice
+		index = indice desejado 
+		pos = posicao do vetor na pilha
+	*/
+	int a, ci, i;
+	i = index;
+	ci = pi[indice3].tamanho / 4;	
+	a = pos - (ci*4);
+	for(i; i<ci; i++){
+		a = a + 4;
+	}
+	return a;
 }
 
 
