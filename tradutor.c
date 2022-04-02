@@ -136,11 +136,6 @@ int main() {
 			contador_if++;
 			continue;
 		}
-		
-		//Se igual a 4 é porque tem sinal negativo
-		if(r == 4){
-			// ??
-		}
 	
 		// Verifica o que está retornando
 		//Retorno constante
