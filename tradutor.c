@@ -136,12 +136,18 @@ int main() {
 			contador_if++;
 			continue;
 		}
+		
+		//Se igual a 4 é porque tem sinal negativo
+		if(r == 4){
+			// ??
+		}
 	
 		// Verifica o que está retornando
 		//Retorno constante
 		r = sscanf(line, "return ci%d", &i1);
 		
 		if( r == 1){
+			printf("#return\n");
 			printf("movl $%d, %%eax\n" ,i1);
 			printf("leave\nret\n");
 			continue;
@@ -150,6 +156,7 @@ int main() {
 		r = sscanf(line, "return %c%c%c", &a0,&a1,&a2);
 
 		if(r == 3){
+			printf("#return\n");
 			sprintf(variavel, "%c%c%c", a0,a1,a2);	
 			printf("movl -%d(%%rbp), %%eax\n",pega_posicao(pi,variavel));	
 			printf("leave\nret\n");		
@@ -262,7 +269,7 @@ int main() {
 				}
 			}
 			//Operação com parametro//
-			if(variavel[0] == 'p') {
+			else if(variavel[0] == 'p') {
 				/*
 
 					pega_posicao pra pegar a posicao do parametro na estrutura
@@ -279,8 +286,8 @@ int main() {
 				}else {
 					sprintf(variavel, "%ci%d", a1,i3);
 					pega_posicao(pi, variavel);
-					printf("movq -%d(%%rbp), %%r10\n", pi[indice3].posicao);
-					printf("movq %%r10, (%%r8)\n");
+					printf("movq -%d(%%rbp), %%r10d\n", pi[indice3].posicao);
+					printf("movq %%r10d, (%%r8)\n");
 				}
 			}
 			printf("\n");
@@ -290,11 +297,33 @@ int main() {
 		r = sscanf(line, "get %ca%d index ci%d to %ci%d", &a0, &i1, &i2, &a1, &i3);
 		if (r == 5) {
 			sprintf(variavel, "%ca%d", a0,i1);
-			sprintf(variavel2, "%ci%d", a1, i3);
 			pega_posicao(pi, variavel);
-			//int calcula_vetor(struct Pilha *pi, int index, int pos)
-			//printf("%ca%d = -%d --> ci%d\n",a0,i1,calcula_vetor(pi, i2), i2);
+			printf("#get %ca%d index ci%d to %ci%d\n", a0, i1, i2, a1, i3);
 			
+			if(variavel[0] == 'v') {
+				/*
+					get array index índice to destino
+					1- joga array no %r8
+					2- passa de %r8 para %r8d porque o destino é sempre int
+					3- destino recebe array 
+				*/
+				printf("leaq -%d(%%rbp), %%r8\n", calcula_vetor(pi, i2)); 
+				printf("movl (%%r8), %%r8d\n");
+				sprintf(variavel, "%ci%d", a1,i3);
+				pega_posicao(pi, variavel);
+				printf("movl %%r8d, -%d(%%rbp)\n", pi[indice3].posicao);	
+			} 
+			else if(variavel[0] == 'p') {
+				printf("movq -%d(%%rbp), %%r8\n", pi[indice3].posicao);
+				printf("movabs $%d, %%r9\n", i2);
+				printf("imulq $4, %%r9\n");
+				printf("addq %%r9, %%r8\n");
+				printf("movl (%%r8), %%r8d\n");
+				sprintf(variavel, "%ci%d", a1,i3);
+				pega_posicao(pi, variavel);
+				printf("movl %%r8d, -%d(%%rbp)\n", pi[indice3].posicao);	
+			}
+			printf("\n");
 		}
 		
 		
