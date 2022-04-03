@@ -166,23 +166,55 @@ int main() {
 		// Verifica se é expressão simples
 		r = sscanf(line, "%ci%d = %ci%d %c %ci%d", &a0, &val, &a1, &i1, &a2, &a3, &i2);
 		
-		// vi1 = ci1 
-		if (r == 4) {
+		// Atribuição de variavel vi1 = ci1 
 		
-
+		if (r == 4) {
+			sprintf(variavel, "%ci%d", a0, val);
+			printf("movl $%d, -%d(%%rbp)\n", i1, pega_posicao(pi, variavel));
 		}
 		// vi1 = pi1 + vi2, vi2 = vi1 * ci-5, etc   pi1 = pi2 + ci2
 		if (r == 7) {
+			if(a1 == 'c'){
+				//Para constante
+				printf("movl $%d, %%r8d\n", i1);
+			}
+			else{
+				sprintf(variavel, "%ci%d", a1, i1);
+				printf("movl -%d(%%rbp), %%r8d\n", pega_posicao(pi, variavel));
+			}
+			if(a3 == 'c'){
+				//Para constante
+				printf("movl $%d, %%r9d\n", i2);
+			}
+			else{
+				sprintf(variavel, "%ci%d", a3, i2);
+				printf("movl -%d(%%rbp), %%r9d\n", pega_posicao(pi, variavel));
+			}
+			sprintf(variavel, "%ci%d", a0, val);
 			//DIVISÃO
 			if (a2 == '/') {
-				
+				printf("movl %%r8d, %%eax\n");
+				printf("cltd\n");
+				printf("idivl %%r9d\n");
+				printf("movl %%eax, -%d(%%rbp)\n", pega_posicao(pi, variavel));
 			}
-			// OUTRAS OPERAÇÕES
-			else {
-				
+			// MULTIPLICAÇÃO
+			else if(a2 == '*') {
+				printf("imull %%r9d, %%r8d\n");
+				printf("movl %%r8d, -%d(%%rbp)\n", pega_posicao(pi, variavel));
+			}
+			// ADIÇÃO
+			else if (a2 == '+'){
+				printf("addl %%r9d, %%r8d\n");
+				printf("movl %%r9d, -%d(%%rbp)\n", pega_posicao(pi, variavel));
+			}
+			// SUBTRAÇÃO
+			else{
+				printf("subl %%r9d, %%r8d\n");
+				printf("movl %%r9d, -%d(%%rbp)\n", pega_posicao(pi, variavel));
 			}
 		}
-
+		
 		//Chamada de função
 		r = sscanf(line, "%c%c%d = call f%d %c%c%d %c%c%d %c%c%d ", &a9, &a10, &i1, &i2, &a0, &a1, &i3, &a3, &a4, &i4,&a6, &a7, &i5);
 		//Pega a posição de todos
