@@ -169,8 +169,16 @@ int main() {
 		// Atribuição de variavel vi1 = ci1 
 		
 		if (r == 4) {
+				if(a1 == 'c'){
+				//Para constante
+				printf("movl $%d, %%r8d\n", i1);
+			}
+			else{
+				sprintf(variavel, "%ci%d", a1, i1);
+				printf("movl -%d(%%rbp), %%r8d\n", pega_posicao(pi, variavel));
+			}
 			sprintf(variavel, "%ci%d", a0, val);
-			printf("movl $%d, -%d(%%rbp)\n", i1, pega_posicao(pi, variavel));
+			printf("movl %%r8d, -%d(%%rbp)\n", pega_posicao(pi, variavel));
 		}
 		// vi1 = pi1 + vi2, vi2 = vi1 * ci-5, etc   pi1 = pi2 + ci2
 		if (r == 7) {
