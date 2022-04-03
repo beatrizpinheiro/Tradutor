@@ -59,22 +59,18 @@ int main() {
 		// Verifica se é uma função e quantos parâmetros
 		r = sscanf(line, "function f%d p%c%d p%c%d p%c%d", 
 				&f, &par[0], &num[0], &par[1], &num[1], &par[2], &num[2]);
-				//printf("r antes = %d\n", r);
 		if ((r-1) / 2 == 1) { // 1 parametro
 			par_pilha(pi, num, par);
 			indice = 1;
 			tamanho_pilha = 8;
-			//exibe_pilha(pi, 1);
 		}
 		else if ((r-1) / 2 == 2) { // 2 parametros
 			par_pilha(pi, num, par);
-			//exibe_pilha(pi, 2);
 			indice = 2;
 			tamanho_pilha = 16;
 		}
 		else if ((r-1) / 2 == 3) { // 3 parametros
 			par_pilha(pi, num, par);
-			//exibe_pilha(pi, 3);
 			indice = 3;
 			tamanho_pilha = 24;
 		}
@@ -87,19 +83,16 @@ int main() {
 		//==VARIAVEIS==//
 		r = sscanf(line, "var vi%d", &var);
 		if (r == 1) {
-			//printf("var vi%d\n", var);
 			cria_pilha(pi, 0, var, 0);
-			exibe_pilha(pi, 0);
 		}
 		r = sscanf(line, "vet va%d size ci%d", &vet, &ci);
 		if (r == 2) {
-			//printf("vet va%d ci%d\n", vet, ci);
 			cria_pilha(pi, 1, vet, ci);
-			exibe_pilha(pi, 0);
 		}
 		
 		//==ENDDEF==//
 		if (strncmp(line, "enddef", 6) == 0) {
+			exibe_pilha(pi, 0);
 			if(tamanho_pilha > 0) {
 				if(tamanho_pilha % 16 == 0) {
 					printf("subq $%d, %%rsp\n", tamanho_pilha);
@@ -137,11 +130,6 @@ int main() {
 			continue;
 		}
 		
-		//Se igual a 4 é porque tem sinal negativo
-		if(r == 4){
-			// ??
-		}
-	
 		// Verifica o que está retornando
 		//Retorno constante
 		r = sscanf(line, "return ci%d", &i1);
@@ -303,7 +291,6 @@ int main() {
 			//Operação com parametro//
 			else if(variavel[0] == 'p') {
 				/*
-
 					pega_posicao pra pegar a posicao do parametro na estrutura
 					r8 recebe parametro, r9 recebe indice
 					multiplicamos r9 por 4(tamanho de um int)
@@ -428,7 +415,6 @@ int par_pilha(struct Pilha *pi, int *n, char *p) {
 		}else{
 			pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 		}
-		//printf("movq %%rdi, -%d(rbp)\n", pi[i].posicao);
 	}
 	else if(n[2] == 0) { // 2 par
 		c=0;
@@ -440,7 +426,6 @@ int par_pilha(struct Pilha *pi, int *n, char *p) {
 			}else{
 				pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 			}
-			//printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
 			c++;
 		}
 	}
@@ -453,7 +438,6 @@ int par_pilha(struct Pilha *pi, int *n, char *p) {
 			}else{
 				pi[i].posicao = pi[i-1].posicao + pi[i].tamanho;
 			}
-			//printf("movq %%r%c%c, -%d(rbp)\n", str[c], str2[c], pi[i].posicao);
 			c++;
 		}
 	}
@@ -549,7 +533,7 @@ void chama_funcao(struct Pilha *pi, int *existe, int *pos, int nome_funcao){
 }
 
 void inicia_traducao(int f) {
-	printf(".globl f%d\nf%d:\n", f, f);
+	printf("\n.globl f%d\nf%d:\n", f, f);
 	printf("pushq %%rbp\n");
 	printf("movq  %%rsp, %%rbp\n");
 }
@@ -586,6 +570,3 @@ int calcula_vetor(struct Pilha *pi, int index) {
 	}
 	return a;
 }
-
-
-
