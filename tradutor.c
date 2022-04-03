@@ -135,7 +135,6 @@ int main() {
 		r = sscanf(line, "return ci%d", &i1);
 		
 		if( r == 1){
-			printf("#return\n");
 			printf("movl $%d, %%eax\n" ,i1);
 			printf("leave\nret\n");
 			continue;
@@ -144,7 +143,6 @@ int main() {
 		r = sscanf(line, "return %c%c%c", &a0,&a1,&a2);
 
 		if(r == 3){
-			printf("#return\n");
 			sprintf(variavel, "%c%c%c", a0,a1,a2);	
 			printf("movl -%d(%%rbp), %%eax\n",pega_posicao(pi,variavel));	
 			printf("leave\nret\n");		
@@ -226,7 +224,7 @@ int main() {
 			if(r >= 7){
 				if(a0 != 'c'){
 					sprintf(variavel, "%c%c%d", a0,a1,i3);	
-					pos[1] = pega_posicao(pi, variavel);
+					pega_posicao(pi, variavel);
 					pos[1] = indice3;
 					existe[1] = 2;
 				}
@@ -239,7 +237,7 @@ int main() {
 			if(r >= 10){
 				if(a3 != 'c'){
 					sprintf(variavel, "%c%c%d", a3,a4,i4);
-					pos[2] = pega_posicao(pi, variavel);
+					pega_posicao(pi, variavel);
 					pos[2] = indice3;
 					existe[2] = 2;
 				}
@@ -252,7 +250,7 @@ int main() {
 			if(r >=13){
 				if(a6 != 'c'){
 					sprintf(variavel, "%c%c%d", a6,a7,i5);	
-					pos[3] = pega_posicao(pi, variavel);
+					pega_posicao(pi, variavel);
 					pos[3] = indice3;
 					existe[3] = 2;
 				}
@@ -515,7 +513,7 @@ void chama_funcao(struct Pilha *pi, int *existe, int *pos, int nome_funcao){
 			}
 			//Parametro int
 			if(variavel[1] == 'i' && variavel[0] != 'c'){
-				printf("movl-%d(%%rbp), %%esi\n",pi[pos2].posicao);
+				printf("movl -%d(%%rbp), %%esi\n",pi[pos2].posicao);
 
 			}
 	}
@@ -530,7 +528,7 @@ void chama_funcao(struct Pilha *pi, int *existe, int *pos, int nome_funcao){
 			}
 			//Parametro int
 			if(variavel[1] == 'i' && variavel[0] != 'c'){
-				printf("movl-%d(%%rbp), %%edx\n",pi[pos3].posicao);
+				printf("movl -%d(%%rbp), %%edx\n",pi[pos3].posicao);
 
 			}
 	}
