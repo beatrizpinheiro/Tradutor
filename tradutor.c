@@ -38,7 +38,7 @@ int main() {
 	char line[LINESZ];
 	int count = 0;
 	int f, var, vet, ci, val, ind;
-	char a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11;
+	char a0, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10;
 	int contador_if = 0;
 	char variavel[4], variavel2[4];
 	int pos[10], existe[4];
